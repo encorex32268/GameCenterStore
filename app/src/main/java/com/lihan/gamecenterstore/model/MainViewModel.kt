@@ -39,7 +39,6 @@ class MainViewModel @Inject constructor(
             repository.getAllGameCenter().collectLatest { stores ->
                 if (stores.isEmpty()) {
                     _dataStatus.value = Resource.Fail(listOf(), "Error")
-
                 } else {
                     _dataStatus.value = Resource.Success(stores)
                 }

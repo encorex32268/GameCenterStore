@@ -13,24 +13,20 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.*
+import com.google.android.gms.maps.CameraUpdate
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.UiSettings
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 
 import com.lihan.gamecenterstore.databinding.ActivityMainBinding
-import com.lihan.gamecenterstore.domain.model.GameCenterStore
 import com.lihan.gamecenterstore.model.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import pub.devrel.easypermissions.EasyPermissions
-import pub.devrel.easypermissions.PermissionRequest
-import javax.inject.Inject
 
 
 @AndroidEntryPoint
@@ -40,7 +36,6 @@ class MainActivity : AppCompatActivity() , EasyPermissions.PermissionCallbacks{
     private lateinit var mMap: GoogleMap
     private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     val viewModel: MainViewModel by viewModels()
-
 
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -86,10 +81,9 @@ class MainActivity : AppCompatActivity() , EasyPermissions.PermissionCallbacks{
                             object : LocationCallback(){
                                 override fun onLocationResult(locationResult: LocationResult) {
                                     super.onLocationResult(locationResult)
-                                    val lastLocation = locationResult.lastLocation
-                                    showUserLocation(
-                                        LatLng(lastLocation.latitude,lastLocation.longitude)
-                                    )
+                                    val latLng = LatLng(locationResult.lastLocation.latitude,locationResult.lastLocation.longitude)
+                                    moveCamera(latLng)
+                                    showStoreMark()
                                     fusedLocationProviderClient.removeLocationUpdates(this)
 
                                 }
@@ -98,49 +92,24 @@ class MainActivity : AppCompatActivity() , EasyPermissions.PermissionCallbacks{
                         )
 
                     }else{
-                        showUserLocation(
-                            LatLng(location.latitude,location.longitude)
-                        )
+                        moveCamera(LatLng(location.latitude,location.longitude))
+                        showStoreMark()
                     }
                 }
 
                 uiSettings.apply {
                     isZoomControlsEnabled = true
                     isMapToolbarEnabled = true
+                    isMyLocationButtonEnabled = true
+                    isMyLocationEnabled = true
 
-//                    isMyLocationButtonEnabled = true
-//                    isMyLocationEnabled = true
-//                    setOnMyLocationButtonClickListener {
-//                        true
-//                    }
-//
-//                    setOnMyLocationClickListener {
-//                        Log.d("TAG", "showMap: ${it.latitude} ,${it.longitude}")
-//                        showUserLocation(
-//                            LatLng(it.latitude,it.longitude)
-//                        )
-//                    }
                 }
             }
 
         }
     }
-
-    private fun showUserLocation(userLocation : LatLng){
-        mMap.apply {
-            addMarker(
-                MarkerOptions()
-                    .title("You")
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-                    .position(userLocation)
-            )
-            moveCamera(
-                CameraUpdateFactory.newLatLngZoom(
-                    userLocation,12f
-                )
-            )
-        }
-        showStoreMark()
+    private fun moveCamera(latLng: LatLng){
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng,15f))
     }
 
     private fun showStoreMark(){
